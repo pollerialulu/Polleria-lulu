@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#171717">
+<title>Pollería Lulú | Ingresos y Egresos</title>
+<style>
+:root{--rojo:#e00000;--oscuro:#050505;--verde:#198754;--azul:#1565c0;--gris:#050505;--borde:#e00000;--amarillo:#f4b400}
+*{box-sizing:border-box}body{margin:0;background:#050505;font-family:Arial,sans-serif;color:#fff}
+header{background:linear-gradient(135deg,#111,#292929);color:#fff;padding:16px 14px;text-align:center;position:sticky;top:0;z-index:20;box-shadow:0 3px 12px #0004}
+header h1{margin:0;font-size:24px}header p{margin:5px 0 0;font-size:13px}
+main{max-width:760px;margin:auto;padding:10px}.card{background:#111;border:2px solid var(--rojo);border-radius:18px;margin:12px 0;padding:15px;box-shadow:0 0 12px #e0000044}
+h2{font-size:19px;margin:0 0 13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+label{font-size:13px;font-weight:bold;display:block;margin:9px 0 5px}
+input,button,select{width:100%;min-height:46px;border-radius:12px;border:1px solid var(--borde);font-size:16px;padding:10px;background:#181818;color:#fff}
+button{border:0;background:var(--oscuro);color:#fff;font-weight:bold;cursor:pointer}button:active{transform:scale(.98)}
+.red{background:var(--rojo)}.green{background:var(--verde)}.blue{background:var(--azul)}.yellow{background:var(--amarillo);color:#111}.danger{background:#8b0000}.whatsapp{background:#25d366}
+.branch button{background:#222;color:#fff}.branch button.active{background:var(--rojo);color:#fff}
+.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #e00000}
+.total{font-size:28px;font-weight:bold;text-align:center;padding:10px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px}.kpi{background:#1a1a1a;border:1px solid #e00000;border-radius:13px;padding:12px;text-align:center}
+.kpi span{display:block;font-size:12px;color:#ccc}.kpi b{font-size:20px;display:block;margin-top:5px}
+details{border:1px solid #e00000;border-radius:13px;padding:11px;margin:8px 0}summary{font-weight:bold;cursor:pointer}
+.note,.small{font-size:12px;color:#bbb;margin-top:8px}.record{border:1px solid #e00000;border-radius:12px;padding:10px;margin:7px 0}
+.record button{min-height:38px;margin-top:6px;font-size:13px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.subbox{background:#181818;border:1px solid #e00000;border-radius:13px;padding:12px;margin-top:10px}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#e00000;color:#fff;font-size:12px;font-weight:bold}
+.balance{border-radius:15px;padding:14px;text-align:center;background:#181818;border:1px solid #e00000;margin-top:10px}
+.balance.good{background:#102016}.balance.bad{background:#240808}
+footer{text-align:center;padding:20px;color:#aaa;font-size:12px}
+@media(max-width:500px){.grid,.kpis,.actions{grid-template-columns:1fr 1fr}header h1{font-size:21px}}
+</style>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#d71920"></head>
+<body>
+<header>
+<h1>🐔 POLLERÍA LULÚ</h1>
+<p>Control de ingresos, egresos y ganancia real</p>
+</header>
+
+<main>
+<section class="card">
+<h2>📅 FECHA DEL REGISTRO</h2>
+<input id="fecha" type="date" onchange="actualizar()">
+<div class="actions" style="margin-top:8px">
+<button class="blue" onclick="hoy()">📅 HOY</button>
+<button onclick="cambiarFecha(-1)">◀ ANTERIOR</button>
+<button onclick="cambiarFecha(1)">SIGUIENTE ▶</button>
+</div>
+</section>
+
+<section class="card">
+<h2>💰 INGRESOS / VENTAS</h2>
+<div class="grid branch">
+<button id="venta2" onclick="seleccionarVenta(2)">🏪 OLIVOS 2</button>
+<button id="venta1" onclick="seleccionarVenta(1)">🏪 OLIVOS 1</button>
+</div>
+<label>Venta de la sucursal seleccionada</label>
+<input id="ventaMonto" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="green" onclick="guardarVenta()" style="margin-top:8px">💾 GUARDAR VENTA</button>
+<div class="row"><span>Olivos 2</span><b id="ventaResumen2">$0.00</b></div>
+<div class="row"><span>Olivos 1</span><b id="ventaResumen1">$0.00</b></div>
+<div class="balance"><span>💰 TOTAL DE LAS 2 SUCURSALES</span><div class="total" id="ventasTotal">$0.00</div></div>
+</section>
+
+<section class="card">
+<h2>🛒 COMPRAS DE POLLO</h2>
+<div class="grid branch">
+<button id="compra2" onclick="seleccionarCompra(2)">🏪 OLIVOS 2</button>
+<button id="compra1" onclick="seleccionarCompra(1)">🏪 OLIVOS 1</button>
+</div>
+
+<label>🐔 CANTIDAD DE POLLOS</label>
+<div class="actions">
+<button onclick="cambiarPollos(-1)">−</button>
+<button onclick="cambiarPollos(1)">+</button>
+</div>
+<div style="text-align:center;font-size:22px;font-weight:bold;padding:7px" id="cantidadPollos">1</div>
+
+<label>⚖️ PESO EN KG</label>
+<input id="peso" type="number" inputmode="decimal" min="0" max="99.99" step="0.01" placeholder="Ejemplo: 36.10 kg">
+
+<label>💵 PRECIO POR KG</label>
+<input id="precio" type="number" step="0.01" min="0" placeholder="$0.00" oninput="calcularCompra()">
+
+<div class="total" id="totalCompra">$0.00</div>
+<button class="red" onclick="guardarCompra()">💾 GUARDAR COMPRA</button>
+
+<div class="row"><span>Compra Olivos 2</span><b id="compraResumen2">$0.00</b></div>
+<div class="row"><span>Compra Olivos 1</span><b id="compraResumen1">$0.00</b></div>
+</section>
+
+<section class="card">
+<h2>💸 EGRESOS / GASTOS</h2>
+
+<details>
+<summary>👥 SUELDOS</summary>
+<div class="row"><span>Abel</span><b>$300</b></div>
+<div class="row"><span>Melani</span><b>$200</b></div>
+<div class="row"><span>Santiago</span><b>$150</b></div>
+<div class="row"><span>Rafa</span><b>$150</b></div>
+<div class="row"><span>💸 TOTAL SUELDOS</span><b id="sueldos">$0.00</b></div>
+<div class="note">Los sueldos se consideran de lunes a sábado. Domingo: $0.</div>
+</details>
+
+<details>
+<summary>🏍️ MOTOS</summary>
+<div class="subbox">
+<h3>🏍️ MOTO BLANCA</h3>
+<label>⛽ Gasolina</label>
+<input id="blancaGasolina" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="green" onclick="guardarMoto('blanca','gasolina')" style="margin-top:7px">💾 GUARDAR GASOLINA</button>
+<label>🔧 Reparación</label>
+<input id="blancaReparacion" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="green" onclick="guardarMoto('blanca','reparacion')" style="margin-top:7px">💾 GUARDAR REPARACIÓN</button>
+</div>
+<div class="subbox">
+<h3>🏍️ MOTO ROJA</h3>
+<label>⛽ Gasolina</label>
+<input id="rojaGasolina" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="green" onclick="guardarMoto('roja','gasolina')" style="margin-top:7px">💾 GUARDAR GASOLINA</button>
+<label>🔧 Reparación</label>
+<input id="rojaReparacion" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="green" onclick="guardarMoto('roja','reparacion')" style="margin-top:7px">💾 GUARDAR REPARACIÓN</button>
+</div>
+</details>
+
+<details open>
+<summary>💸 OTROS GASTOS</summary>
+<label>📝 Concepto</label>
+<input id="otroConcepto" type="text" placeholder="Ejemplo: bolsas, hielo, limpieza...">
+<label>💵 Monto</label>
+<input id="otroMonto" type="number" step="0.01" min="0" placeholder="$0.00">
+<button class="red" onclick="guardarOtroGasto()" style="margin-top:7px">💾 GUARDAR OTRO GASTO</button>
+<div id="listaOtrosGastos" style="margin-top:8px"></div>
+<div class="row"><span>💸 TOTAL OTROS GASTOS</span><b id="gOtros">$0.00</b></div>
+<div class="note">Puedes registrar varios otros gastos en el mismo día. Al guardar, los campos se limpian para el siguiente registro.</div>
+</details>
+
+<div class="row"><span>👥 Sueldos</span><b id="gSueldos">$0.00</b></div>
+<div class="row"><span>🏍️ Motos</span><b id="gMotos">$0.00</b></div>
+<div class="row"><span>💸 TOTAL EGRESOS DEL DÍA</span><b id="gTotal">$0.00</b></div>
+</section>
+
+<section class="card">
+<h2>📊 RESUMEN DEL DÍA</h2>
+<div class="kpis">
+<div class="kpi"><span>🐔 POLLOS</span><b id="rPollos">0</b></div>
+<div class="kpi"><span>⚖️ KILOS</span><b id="rKilos">0.00</b></div>
+<div class="kpi"><span>🛒 COMPRAS</span><b id="rCompras">$0.00</b></div>
+<div class="kpi"><span>💰 VENTAS</span><b id="rVentas">$0.00</b></div>
+</div>
+<div id="gananciaBox" class="balance good">
+<div>💵 GANANCIA REAL DEL DÍA</div>
+<div class="total" id="ganancia">$0.00</div>
+</div>
+<div class="actions" style="margin-top:10px">
+<button class="whatsapp" onclick="compartir()">📲 WHATSAPP</button>
+<button class="danger" onclick="reiniciar()">🔄 REINICIAR DÍA</button>
+</div>
+</section>
+
+<section class="card">
+<h2>📈 ACUMULADO</h2>
+<div class="pill">Desde 01/10/2026</div>
+<div class="kpis" style="margin-top:10px">
+<div class="kpi"><span>🐔 POLLOS</span><b id="aPollos">0</b></div>
+<div class="kpi"><span>⚖️ KILOS</span><b id="aKilos">0.00</b></div>
+<div class="kpi"><span>🛒 COMPRAS</span><b id="aCompras">$0.00</b></div>
+<div class="kpi"><span>💰 VENTAS</span><b id="aVentas">$0.00</b></div>
+<div class="kpi"><span>🧾 REGISTROS</span><b id="aRegistros">0</b></div>
+<div class="kpi"><span>💵 GANANCIA REAL</span><b id="aGanancia">$0.00</b></div>
+</div>
+</section>
+
+<section class="card records">
+<h2>🧾 REGISTROS DEL DÍA</h2>
+<div id="listaRegistros"></div>
+</section>
+
+<section class="card">
+<h2>💾 RESPALDO DE DATOS</h2>
+<p class="small">Puedes guardar una copia de tus ingresos y egresos o restaurarla en otro teléfono.</p>
+<div class="actions">
+<button class="blue" onclick="exportar()">⬇️ EXPORTAR</button>
+<button class="yellow" onclick="document.getElementById('archivo').click()">⬆️ IMPORTAR</button>
+</div>
+<input id="archivo" type="file" accept=".json" style="display:none" onchange="importar(event)">
+</section>
+
+<footer>Pollería Lulú · Calidad y servicio hasta la puerta de su casa</footer>
+</main>
+
+<script>
+const KEY_VENTAS="polleriaLuluVentasV2";
+const KEY_COMPRAS="polleriaLuluComprasV2";
+const KEY_MOTOS="polleriaLuluMotoGastosV2";
+const KEY_PRECIO="polleriaLuluUltimoPrecioV2";
+const KEY_OTROS="polleriaLuluOtrosGastosV2";
+let sucursalVenta=2, sucursalCompra=2;
+
+const $=id=>document.getElementById(id);
+function fechaActual(){return new Date().toISOString().slice(0,10)}
+function dinero(n){return new Intl.NumberFormat("es-MX",{style:"currency",currency:"MXN"}).format(Number(n)||0)}
+function leer(k,d={}){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}}
+function guardar(k,d){localStorage.setItem(k,JSON.stringify(d))}
+function dia(f){return new Date(f+"T00:00:00").getDay()}
+function permiteGastos(f){let d=dia(f);return d>=1&&d<=6}
+
+function hoy(){$("fecha").value=fechaActual();actualizar()}
+function cambiarFecha(n){
+ let f=$("fecha").value||fechaActual(),d=new Date(f+"T00:00:00");
+ d.setDate(d.getDate()+n);$("fecha").value=d.toISOString().slice(0,10);actualizar();
+}
+function seleccionarVenta(n){sucursalVenta=n;$("venta1").classList.toggle("active",n===1);$("venta2").classList.toggle("active",n===2)}
+function seleccionarCompra(n){sucursalCompra=n;$("compra1").classList.toggle("active",n===1);$("compra2").classList.toggle("active",n===2)}
+function cambiarPollos(n){
+ let x=Math.max(1,Math.min(40,Number($("cantidadPollos").textContent)+n));
+ $("cantidadPollos").textContent=x;
+}
+function pesoKg(){
+ let x=Number($("peso").value||0);
+ return Math.max(0,Math.min(99.99,x));
+}
+$("peso").addEventListener("input",function(){
+ let x=this.value;
+ if(x.includes(".")){
+   let partes=x.split(".");
+   this.value=partes[0].slice(0,2)+"."+partes[1].slice(0,2);
+ }
+ calcularCompra();
+})
+function calcularCompra(){$("totalCompra").textContent=dinero(pesoKg()*Number($("precio").value||0))}
+
+function guardarVenta(){
+ let f=$("fecha").value,m=Number($("ventaMonto").value||0);
+ if(!f)return alert("Selecciona una fecha.");
+ if(m<=0)return alert("Ingresa una venta mayor a $0.");
+ let d=leer(KEY_VENTAS);if(!d[f])d[f]={olivos1:0,olivos2:0};
+ d[f]["olivos"+sucursalVenta]=m;guardar(KEY_VENTAS,d);
+ $("ventaMonto").value="";actualizar();alert("✅ Venta guardada.");
+}
+
+function guardarCompra(){
+ let f=$("fecha").value,pollos=Number($("cantidadPollos").textContent),peso=pesoKg(),precio=Number($("precio").value||0);
+ if(!f)return alert("Selecciona una fecha.");
+ if(peso<=0||precio<=0)return alert("Completa peso y precio.");
+ let d=leer(KEY_COMPRAS);if(!d[f])d[f]=[];
+ d[f].push({id:Date.now(),sucursal:sucursalCompra,pollos,peso,precio,total:peso*precio});
+ guardar(KEY_COMPRAS,d);localStorage.setItem(KEY_PRECIO,precio);
+ $("cantidadPollos").textContent="1";$("peso").value="";calcularCompra();actualizar();alert("✅ Compra guardada.");
+}
+
+function guardarMoto(moto,tipo){
+ let f=$("fecha").value;
+ if(!f)return alert("Selecciona una fecha.");
+ if(!permiteGastos(f))return alert("ℹ️ Los gastos solo se aplican de lunes a sábado.");
+ let id=moto+(tipo==="gasolina"?"Gasolina":"Reparacion"),m=Number($(id).value||0);
+ if(m<=0)return alert("Ingresa un monto mayor a $0.");
+ let d=leer(KEY_MOTOS);if(!d[f])d[f]={blanca:{gasolina:0,reparacion:0},roja:{gasolina:0,reparacion:0}};
+ d[f][moto][tipo]=m;guardar(KEY_MOTOS,d);$(id).value="";actualizar();alert("✅ Gasto guardado.");
+}
+function gastosDelDia(f){
+ let sueldos=permiteGastos(f)?800:0;
+ let d=leer(KEY_MOTOS)[f]||{blanca:{gasolina:0,reparacion:0},roja:{gasolina:0,reparacion:0}};
+ let motos=permiteGastos(f)?Number(d.blanca?.gasolina||0)+Number(d.blanca?.reparacion||0)+Number(d.roja?.gasolina||0)+Number(d.roja?.reparacion||0):0;
+ let otros=(leer(KEY_OTROS)[f]||[]).reduce((a,x)=>a+Number(x.monto||0),0);
+ return{sueldos,motos,otros,total:sueldos+motos+otros};
+}
+
+function guardarOtroGasto(){
+ let f=$("fecha").value,concepto=$("otroConcepto").value.trim(),monto=Number($("otroMonto").value||0);
+ if(!f)return alert("Selecciona una fecha.");
+ if(!concepto)return alert("Escribe el concepto del gasto.");
+ if(monto<=0)return alert("Ingresa un monto mayor a $0.");
+ let d=leer(KEY_OTROS);if(!d[f])d[f]=[];
+ d[f].push({id:Date.now(),concepto,monto});guardar(KEY_OTROS,d);
+ $("otroConcepto").value="";$("otroMonto").value="";actualizar();alert("✅ Otro gasto guardado.");
+}
+function mostrarOtrosGastos(f){
+ let arr=leer(KEY_OTROS)[f]||[],b=$("listaOtrosGastos");
+ if(!arr.length){b.innerHTML='<div class="small">No hay otros gastos registrados este día.</div>';return;}
+ b.innerHTML=arr.map(x=>`<div class="record"><b>💸 ${escapeHtml(x.concepto)}</b><br><span>${dinero(x.monto)}</span><button class="danger" onclick="eliminarOtroGasto(${x.id})">🗑️ ELIMINAR</button></div>`).join("");
+}
+function escapeHtml(t){return String(t).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function eliminarOtroGasto(id){
+ let f=$("fecha").value,d=leer(KEY_OTROS);if(!d[f])return;d[f]=d[f].filter(x=>x.id!==id);if(!d[f].length)delete d[f];guardar(KEY_OTROS,d);actualizar();
+}
+function actualizar(){
+ let f=$("fecha").value;if(!f)return;
+ let v=leer(KEY_VENTAS)[f]||{olivos1:0,olivos2:0},c=leer(KEY_COMPRAS)[f]||[],g=gastosDelDia(f);
+ let md=leer(KEY_MOTOS)[f]||{blanca:{gasolina:0,reparacion:0},roja:{gasolina:0,reparacion:0}};
+ let c1=c.filter(x=>x.sucursal===1).reduce((a,x)=>a+x.total,0),c2=c.filter(x=>x.sucursal===2).reduce((a,x)=>a+x.total,0);
+ let compras=c.reduce((a,x)=>a+x.total,0),pollos=c.reduce((a,x)=>a+x.pollos,0),kilos=c.reduce((a,x)=>a+x.peso,0);
+ let ventas=Number(v.olivos1||0)+Number(v.olivos2||0),real=ventas-compras-g.total;
+ $("ventaResumen1").textContent=dinero(v.olivos1);$("ventaResumen2").textContent=dinero(v.olivos2);$("ventasTotal").textContent=dinero(ventas);
+ $("compraResumen1").textContent=dinero(c1);$("compraResumen2").textContent=dinero(c2);
+ $("rPollos").textContent=pollos;$("rKilos").textContent=kilos.toFixed(2);$("rCompras").textContent=dinero(compras);$("rVentas").textContent=dinero(ventas);$("ganancia").textContent=dinero(real);
+ $("gSueldos").textContent=dinero(g.sueldos);$("gMotos").textContent=dinero(g.motos);$("gOtros").textContent=dinero(g.otros);$("gTotal").textContent=dinero(g.total);$("sueldos").textContent=dinero(g.sueldos);mostrarOtrosGastos(f);
+ $("blancaGasolina").value=md.blanca?.gasolina||"";$("blancaReparacion").value=md.blanca?.reparacion||"";$("rojaGasolina").value=md.roja?.gasolina||"";$("rojaReparacion").value=md.roja?.reparacion||"";
+ $("gananciaBox").className="balance "+(real>=0?"good":"bad");mostrarRegistros(c);actualizarAcumulado();
+}
+function mostrarRegistros(c){
+ let b=$("listaRegistros");
+ if(!c.length){b.innerHTML='<div class="small">No hay compras registradas este día.</div>';return}
+ b.innerHTML=c.map(x=>`<div class="record"><b>${x.sucursal===2?"Olivos 2":"Olivos 1"}</b><br>🐔 ${x.pollos} pollos · ⚖️ ${x.peso.toFixed(2)} kg<br>💵 ${dinero(x.precio)}/kg · <b>${dinero(x.total)}</b><button class="danger" onclick="eliminarCompra(${x.id})">🗑️ ELIMINAR</button></div>`).join("")
+}
+function eliminarCompra(id){
+ let f=$("fecha").value,d=leer(KEY_COMPRAS);if(!d[f])return;d[f]=d[f].filter(x=>x.id!==id);if(!d[f].length)delete d[f];guardar(KEY_COMPRAS,d);actualizar()
+}
+function fechaSiguiente(f){let d=new Date(f+"T00:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10)}
+function actualizarAcumulado(){
+ let desde="2026-10-01",hasta=fechaActual(),v=leer(KEY_VENTAS),c=leer(KEY_COMPRAS),p=0,k=0,ct=0,vt=0,r=0,g=0;
+ for(let f=desde;f<=hasta;f=fechaSiguiente(f)){
+  let arr=c[f]||[],vv=v[f]||{olivos1:0,olivos2:0},cd=arr.reduce((a,x)=>a+x.total,0),vd=Number(vv.olivos1||0)+Number(vv.olivos2||0);
+  arr.forEach(x=>{p+=x.pollos;k+=x.peso;r++});ct+=cd;vt+=vd;g+=vd-cd-gastosDelDia(f).total;
+ }
+ $("aPollos").textContent=p;$("aKilos").textContent=k.toFixed(2);$("aCompras").textContent=dinero(ct);$("aVentas").textContent=dinero(vt);$("aRegistros").textContent=r;$("aGanancia").textContent=dinero(g);
+}
+function compartir(){
+ let f=$("fecha").value,v=leer(KEY_VENTAS)[f]||{olivos1:0,olivos2:0},c=leer(KEY_COMPRAS)[f]||[],g=gastosDelDia(f);
+ let ventas=Number(v.olivos1||0)+Number(v.olivos2||0),compras=c.reduce((a,x)=>a+x.total,0),pollos=c.reduce((a,x)=>a+x.pollos,0),kilos=c.reduce((a,x)=>a+x.peso,0),real=ventas-compras-g.total;
+ let msg=`🐔 POLLERÍA LULÚ\n📅 ${f}\n\n💰 INGRESOS\nOlivos 2: ${dinero(v.olivos2)}\nOlivos 1: ${dinero(v.olivos1)}\nTOTAL: ${dinero(ventas)}\n\n🛒 COMPRAS: ${dinero(compras)}\n🐔 Pollos: ${pollos}\n⚖️ Kilos: ${kilos.toFixed(2)}\n\n💸 EGRESOS\nSueldos: ${dinero(g.sueldos)}\nMotos: ${dinero(g.motos)}\nOtros gastos: ${dinero(g.otros)}\nTOTAL EGRESOS: ${dinero(g.total)}\n\n💵 GANANCIA REAL: ${dinero(real)}`;
+ location.href="https://wa.me/?text="+encodeURIComponent(msg)
+}
+function reiniciar(){
+ let f=$("fecha").value;if(!f)return;
+ if(!confirm("¿Reiniciar ventas, compras y gastos de este día?"))return;
+ let v=leer(KEY_VENTAS),c=leer(KEY_COMPRAS),m=leer(KEY_MOTOS),o=leer(KEY_OTROS);delete v[f];delete c[f];delete m[f];delete o[f];guardar(KEY_VENTAS,v);guardar(KEY_COMPRAS,c);guardar(KEY_MOTOS,m);guardar(KEY_OTROS,o);actualizar()
+}
+function exportar(){
+ let datos={version:2,exportado:new Date().toISOString(),ventas:leer(KEY_VENTAS),compras:leer(KEY_COMPRAS),motos:leer(KEY_MOTOS),otrosGastos:leer(KEY_OTROS),ultimoPrecio:localStorage.getItem(KEY_PRECIO)||""};
+ let blob=new Blob([JSON.stringify(datos,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="polleria-lulu-respaldo.json";a.click();URL.revokeObjectURL(a.href)
+}
+function importar(e){
+ let file=e.target.files[0];if(!file)return;
+ let r=new FileReader();r.onload=function(){try{let d=JSON.parse(r.result);if(!d.ventas||!d.compras||!d.motos)throw Error();
+ localStorage.setItem(KEY_VENTAS,JSON.stringify(d.ventas));localStorage.setItem(KEY_COMPRAS,JSON.stringify(d.compras));localStorage.setItem(KEY_MOTOS,JSON.stringify(d.motos));localStorage.setItem(KEY_OTROS,JSON.stringify(d.otrosGastos||{}));if(d.ultimoPrecio)localStorage.setItem(KEY_PRECIO,d.ultimoPrecio);
+ actualizar();alert("✅ Respaldo restaurado correctamente.")}catch(x){alert("❌ El archivo no es un respaldo válido de Pollería Lulú.")}};r.readAsText(file);e.target.value=""
+}
+function iniciar(){
+ $("fecha").value=fechaActual();let p=localStorage.getItem(KEY_PRECIO);if(p)$("precio").value=p;seleccionarVenta(2);seleccionarCompra(2);actualizar();calcularCompra()
+}
+iniciar();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"))}</script></body>
+</html>
